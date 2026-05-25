@@ -61,16 +61,20 @@ SELECT
 
 FROM ethereum.transactions t
 
--- prices.usd contains minute-level price data for tokens including ETH.
+-- prices.usd contains minute-level price data for ERC-20 tokens.
+-- Native ETH has no direct entry; WETH (Wrapped ETH, 0xc02a...) is used as the
+-- price proxy. WETH always trades 1:1 with ETH by construction.
 -- We join on the minute containing each transaction's block time.
 -- date_trunc('minute', ...) rounds the timestamp down to the nearest whole minute.
 -- LEFT JOIN means: if a price row is missing for a given minute (rare gaps in
 -- price data), the transaction row is still returned with NULL price values,
 -- and the WHERE clause below then excludes it.
 LEFT JOIN prices.usd p
-    ON  p.blockchain = 'ethereum'
-    AND p.symbol     = 'ETH'
-    AND p.minute     = date_trunc('minute', t.block_time)
+    ON  p.blockchain        = 'ethereum'
+    -- Dune has no native ETH price entry; WETH (Wrapped ETH) is the proxy.
+    -- WETH always trades 1:1 with ETH — it is ETH locked in an ERC-20 wrapper.
+    AND p.contract_address  = 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
+    AND p.minute            = date_trunc('minute', t.block_time)
 
 WHERE
     -- Time window bounds — substituted at query execution time by Dune parameters.

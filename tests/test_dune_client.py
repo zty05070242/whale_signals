@@ -26,29 +26,7 @@ from src.data.dune_client import (
     poll_until_complete,
     fetch_results_csv,
     run_query,
-    _infer_dune_param_type,
 )
-
-
-# ---------------------------------------------------------------------------
-# _infer_dune_param_type — pure function, no mocking needed
-# ---------------------------------------------------------------------------
-
-class TestInferDuneParamType:
-    def test_integer_returns_number(self):
-        assert _infer_dune_param_type(1_000_000) == "number"
-
-    def test_float_returns_number(self):
-        assert _infer_dune_param_type(3.14) == "number"
-
-    def test_string_returns_text(self):
-        assert _infer_dune_param_type("2023-01-01") == "text"
-
-    def test_bool_returns_enum_not_number(self):
-        # In Python, bool is a subclass of int, so True == 1 and isinstance(True, int)
-        # is True. The function must check for bool BEFORE int to avoid this trap.
-        assert _infer_dune_param_type(True) == "enum"
-        assert _infer_dune_param_type(False) == "enum"
 
 
 # ---------------------------------------------------------------------------
@@ -86,13 +64,9 @@ class TestExecuteQuery:
             mock_post.return_value = self._make_mock_response("x")
             execute_query(query_id=1, parameters={"start_date": "2023-01-01"})
 
-        # call_args.kwargs["json"] is the dict passed as the json= keyword argument
+        # Dune expects a flat dict, not a list of typed objects
         sent_body = mock_post.call_args.kwargs["json"]
-        assert "query_parameters" in sent_body
-        param = sent_body["query_parameters"][0]
-        assert param["name"] == "start_date"
-        assert param["value"] == "2023-01-01"
-        assert param["type"] == "text"
+        assert sent_body["query_parameters"] == {"start_date": "2023-01-01"}
 
     def test_raises_value_error_when_api_key_missing(self):
         original_key = config.DUNE_API_KEY

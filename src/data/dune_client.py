@@ -35,21 +35,6 @@ def _auth_header() -> dict[str, str]:
     return {"X-Dune-API-Key": config.DUNE_API_KEY}
 
 
-def _infer_dune_param_type(value: object) -> str:
-    """
-    Map a Python value to one of Dune's three parameter type strings.
-
-    Dune requires each parameter to be tagged with a type so it can
-    validate and substitute them safely in the SQL template.
-    """
-    if isinstance(value, bool):
-        # bool must come before int because in Python bool is a subclass of int
-        return "enum"
-    if isinstance(value, (int, float)):
-        return "number"
-    return "text"  # covers strings, dates formatted as "YYYY-MM-DD", etc.
-
-
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -79,15 +64,8 @@ def execute_query(
 
     body: dict = {}
     if parameters:
-        # Dune expects a list of dicts, one per parameter
-        body["query_parameters"] = [
-            {
-                "name": name,
-                "type": _infer_dune_param_type(value),
-                "value": str(value),  # Dune always expects a string-encoded value
-            }
-            for name, value in parameters.items()
-        ]
+        # Dune expects a flat dict of {parameter_name: value} — not a list of objects
+        body["query_parameters"] = parameters
 
     response = requests.post(url, json=body, headers=_auth_header(), timeout=30)
     # raise_for_status() converts HTTP 4xx/5xx responses into Python exceptions,

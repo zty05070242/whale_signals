@@ -6,6 +6,8 @@ data/processed/
 *.pkl
 *.h5
 !data/README.md
+# Curated reference tables are version-controlled even though they are CSVs
+!data/reference/*.csv
 
 # API keys
 .env
