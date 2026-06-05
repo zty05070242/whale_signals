@@ -70,9 +70,3 @@ whale_signals/
 ## Status
 
 In active development. Findings will be documented in `docs/findings.md`.
-
-## Author
-
-Fred Zheng — BSc Music and Sound Recording (Tonmeister), University of Surrey.
-
-Applying signal processing methods from audio engineering — time-series filtering, adaptive systems, event detection — to financial market data.
